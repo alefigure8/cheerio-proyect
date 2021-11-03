@@ -51,6 +51,7 @@ newspapers.forEach(newspaper => {
             })
 
         }))
+        .catch(err => console.log(err))
 })
 
 app.get('/news', (req, res) => {
