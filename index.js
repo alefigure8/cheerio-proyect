@@ -1,15 +1,15 @@
-const PORT = 8000;
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
+const PORT = process.env.PORT || 8000;
+const express = require("express");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
 //INIT
 const app = express();
 
 //API RESPONSE
 const newspapers = [{
-        name: 'whashingtonpost',
-        address: 'https://www.washingtonpost.com/climate-solutions/?itid=nb_climate-solutions',
+        name: 'cityam',
+        address: 'https://www.cityam.com/london-must-become-a-world-leader-on-climate-change-action/',
         base: ''
     },
     {
@@ -18,46 +18,114 @@ const newspapers = [{
         base: ''
     },
     {
-        name: 'theguardian',
+        name: 'guardian',
         address: 'https://www.theguardian.com/environment/climate-crisis',
+        base: '',
+    },
+    {
+        name: 'telegraph',
+        address: 'https://www.telegraph.co.uk/climate-change',
+        base: 'https://www.telegraph.co.uk',
+    },
+    {
+        name: 'nyt',
+        address: 'https://www.nytimes.com/international/section/climate',
+        base: '',
+    },
+    {
+        name: 'latimes',
+        address: 'https://www.latimes.com/environment',
+        base: '',
+    },
+    {
+        name: 'smh',
+        address: 'https://www.smh.com.au/environment/climate-change',
+        base: 'https://www.smh.com.au',
+    },
+    {
+        name: 'un',
+        address: 'https://www.un.org/climatechange',
+        base: '',
+    },
+    {
+        name: 'bbc',
+        address: 'https://www.bbc.co.uk/news/science_and_environment',
+        base: 'https://www.bbc.co.uk',
+    },
+    {
+        name: 'es',
+        address: 'https://www.standard.co.uk/topic/climate-change',
+        base: 'https://www.standard.co.uk'
+    },
+    {
+        name: 'sun',
+        address: 'https://www.thesun.co.uk/topic/climate-change-environment/',
         base: ''
     },
     {
-        name: 'thetelegraph',
-        address: 'https://www.telegraph.co.uk/climate-change/',
-        base: 'https://www.telegraph.co.uk'
+        name: 'dm',
+        address: 'https://www.dailymail.co.uk/news/climate_change_global_warming/index.html',
+        base: ''
+    },
+    {
+        name: 'nyp',
+        address: 'https://nypost.com/tag/climate-change/',
+        base: ''
     }
-]
-const articles = []
+];
+const articles = [];
 
 //ROUTE
-app.get('/', (req, res) => {
-    res.json('Welcome to my Climate Change News API')
-})
+app.get("/", (req, res) => {
+    res.json("Welcome to my Climate Change News API");
+});
 
-newspapers.forEach(newspaper => {
-    axios.get(newspaper.address)
-        .then((response => {
-            const html = response.data
-            const $ = cheerio.load(html)
+newspapers.forEach((newspaper) => {
+    axios
+        .get(newspaper.address)
+        .then((response) => {
+            const html = response.data;
+            const $ = cheerio.load(html);
             $('a:contains("climate")', html).each((i, el) => {
-                const title = $(el).text()
-                const url = $(el).attr('href')
+                const title = $(el).text();
+                const url = $(el).attr("href");
                 articles.push({
                     title,
                     url: newspaper.base + url,
-                    source: newspaper.name
-                })
-            })
+                    source: newspaper.name,
+                });
+            });
+        })
+        .catch((err) => console.log(err));
+});
 
-        }))
-        .catch(err => console.log(err))
-})
+app.get("/news", (req, res) => {
+    res.json(articles);
+});
 
-app.get('/news', (req, res) => {
-    res.json(articles)
-})
+app.get("/news/:newspaperID", (req, res) => {
+    const id = req.params.newspaperID;
+    const newspaper = newspapers.filter((newspaper) => newspaper.name === id)[0];
+    axios
+        .get(newspaper.address)
+        .then((response) => {
+            const html = response.data;
+            const $ = cheerio.load(html);
+            const specificArticles = [];
+            $('a:contains("climate")', html).each((i, el) => {
+                const title = $(el).text();
+                const url = $(el).attr("href");
+                specificArticles.push({
+                    title,
+                    url: newspaper.base + url,
+                    source: newspaper.name,
+                });
+            });
+            res.json(specificArticles);
+        })
+        .catch((err) => console.log(err));
+});
 
 app.listen(PORT, () => {
-    console.log(`Server on port http://localhost:${PORT}`)
-})
+    console.log(`Server on port http://localhost:${PORT}`);
+});
